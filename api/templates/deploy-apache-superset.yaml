@@ -1,0 +1,69 @@
+metadata:
+  id: "deploy-apache-superset"
+  name: "Apache Superset"
+  description: "Apache Superset is a modern data exploration and visualization platform designed for data analysis and dashboarding."
+  author: "Nixopus Team"
+  icon: "📊"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Apache Superset"
+    default: "apache/superset"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "superset"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Superset"
+    default: 8088
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Superset service"
+    default: 8088
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Apache Superset image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Apache Superset container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+  validate:
+    - name: "Check Superset web interface availability"
+      type: "command"
+      properties:
+        cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+      timeout: 60
