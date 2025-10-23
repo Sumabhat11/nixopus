@@ -1,0 +1,77 @@
+metadata:
+  id: "deploy-supabase"
+  name: "Supabase"
+  description: "Self-host Supabase locally or on a server using Docker Compose."
+  author: "Nixopus Team"
+  icon: "🧩"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  install_dir:
+    type: "string"
+    description: "Directory where Supabase project and Docker setup will be created"
+    default: "./supabase-project"
+    is_required: true
+
+execution:
+  run:
+    - name: "Install Docker"
+      type: "command"
+      properties:
+        cmd: "curl -fsSL https://get.docker.com | bash"
+      timeout: 300
+
+    - name: "Install Docker Compose plugin"
+      type: "command"
+      properties:
+        cmd: |
+          if ! docker compose version >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+          fi
+      timeout: 300
+
+    - name: "Clone Supabase repository"
+      type: "command"
+      properties:
+        cmd: "git clone --depth 1 https://github.com/supabase/supabase"
+      timeout: 120
+
+    - name: "Create project directory"
+      type: "command"
+      properties:
+        cmd: "mkdir -p {{ install_dir }}"
+      timeout: 20
+
+    - name: "Copy Supabase Docker files"
+      type: "command"
+      properties:
+        cmd: "cp -rf supabase/docker/* {{ install_dir }}"
+      timeout: 30
+
+    - name: "Copy example environment file"
+      type: "command"
+      properties:
+        cmd: "cp supabase/docker/.env.example {{ install_dir }}/.env"
+      timeout: 20
+
+    - name: "Pull Supabase Docker images"
+      type: "command"
+      properties:
+        cmd: "cd {{ install_dir }} && docker compose pull"
+      timeout: 300
+
+    - name: "Start Supabase containers"
+      type: "command"
+      properties:
+        cmd: "cd {{ install_dir }} && docker compose up -d"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check Supabase containers are running"
+  #     type: "command"
+  #     properties:
+  #       cmd: "docker compose -f {{ install_dir }}/docker-compose.yml ps | grep -q 'Up'"
+  #     timeout: 30

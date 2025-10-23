@@ -1,0 +1,83 @@
+metadata:
+  id: "deploy-pinry"
+  name: "Pinry"
+  description: "Self-host your own visual bookmarking (Pinterest-like) app — Pinry — using Docker or build from source."
+  author: "Nixopus Team"
+  icon: "📌"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  install_dir:
+    type: "string"
+    description: "Directory where Pinry data and configuration will be stored"
+    default: "./pinry-data"
+    is_required: true
+
+  use_latest_source:
+    type: "boolean"
+    description: "If true, builds the Docker image from source instead of using DockerHub image"
+    default: false
+    is_required: false
+
+  host_port:
+    type: "integer"
+    description: "Host port to access Pinry web interface"
+    default: 80
+    is_required: true
+
+execution:
+  run:
+    - name: "Ensure installation directory exists"
+      type: "command"
+      properties:
+        cmd: "mkdir -p {{ install_dir }}"
+      timeout: 30
+
+    - name: "Install Docker if missing"
+      type: "command"
+      properties:
+        cmd: "curl -fsSL https://get.docker.com | bash"
+      timeout: 300
+
+    - name: "Set absolute data path"
+      type: "command"
+      properties:
+        cmd: "export DATA_PATH=$(readlink -f {{ install_dir }})"
+      timeout: 10
+
+    - name: "Build or pull Pinry image"
+      type: "command"
+      properties:
+        cmd: |
+          if [ "{{ use_latest_source }}" = "true" ]; then
+            git clone https://github.com/pinry/pinry pinry-src && \
+            cd pinry-src/docker && \
+            ./build_docker.sh
+          else
+            docker pull getpinry/pinry
+          fi
+      timeout: 300
+
+    - name: "Run Pinry container"
+      type: "command"
+      properties:
+        cmd: |
+          DATA_PATH=$(readlink -f {{ install_dir }}) && \
+          docker run -d -p={{ host_port }}:80 -v=${DATA_PATH}:/data getpinry/pinry
+      timeout: 120
+
+  # validate:
+  #   - name: "Check Pinry container is running"
+  #     type: "command"
+  #     properties:
+  #       cmd: "docker ps --filter 'ancestor=getpinry/pinry' --format '{{.Names}}' | grep -q pinry"
+  #     timeout: 30
+
+  #   - name: "Verify Pinry web UI accessibility"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

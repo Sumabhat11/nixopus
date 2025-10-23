@@ -1,0 +1,92 @@
+metadata:
+  id: "deploy-gotify"
+  name: "Gotify"
+  description: "Gotify is a simple self-hosted push notification server that allows you to send messages to your devices easily."
+  author: "Nixopus Team"
+  icon: "🔔"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Gotify server"
+    default: "gotify/server"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Gotify container"
+    default: "gotify"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Gotify web interface"
+    default: 8080
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port used by Gotify"
+    default: 80
+    is_required: true
+
+  data_path:
+    type: "string"
+    description: "Local path to store Gotify data (database, images, certificates)"
+    default: "./gotify_data"
+    is_required: true
+
+  timezone:
+    type: "string"
+    description: "Timezone for Gotify container"
+    default: "UTC"
+    is_required: false
+
+  default_user_pass:
+    type: "string"
+    description: "Default password for Gotify's admin user"
+    default: "admin"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Gotify Docker image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Gotify container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ data_path }}:/app/data"
+        environment:
+          - "TZ={{ timezone }}"
+          - "GOTIFY_DEFAULTUSER_PASS={{ default_user_pass }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check if Gotify web UI is reachable"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

@@ -1,0 +1,115 @@
+metadata:
+  id: "deploy-immich"
+  name: "Immich"
+  description: "Immich is a high-performance, self-hosted photo and video backup solution powered by machine learning and built for privacy."
+  author: "Nixopus Team"
+  icon: "📸"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  install_dir:
+    type: "string"
+    description: "Directory to install and run Immich"
+    default: "./immich-app"
+    is_required: true
+
+  compose_file_url:
+    type: "string"
+    description: "URL to download Immich docker-compose.yml file"
+    default: "https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml"
+    is_required: true
+
+  env_file_url:
+    type: "string"
+    description: "URL to download Immich example.env file"
+    default: "https://github.com/immich-app/immich/releases/latest/download/example.env"
+    is_required: true
+
+  upload_location:
+    type: "string"
+    description: "Directory to store uploaded photo and video files"
+    default: "./library"
+    is_required: true
+
+  db_data_location:
+    type: "string"
+    description: "Directory to store PostgreSQL database files"
+    default: "./postgres"
+    is_required: true
+
+  timezone:
+    type: "string"
+    description: "Timezone setting for Immich container"
+    default: "Etc/UTC"
+    is_required: false
+
+  immich_version:
+    type: "string"
+    description: "Immich version or release tag"
+    default: "release"
+    is_required: true
+
+  db_password:
+    type: "string"
+    description: "Password for Immich PostgreSQL database (only A–Z, a–z, 0–9 allowed)"
+    default: "postgres"
+    is_required: true
+
+execution:
+  run:
+    - name: "Create installation directory"
+      type: "command"
+      properties:
+        cmd: "mkdir -p {{ install_dir }}"
+      timeout: 30
+
+    - name: "Change to installation directory"
+      type: "command"
+      properties:
+        cmd: "cd {{ install_dir }}"
+      timeout: 30
+
+    - name: "Download docker-compose.yml"
+      type: "command"
+      properties:
+        cmd: "wget -O docker-compose.yml {{ compose_file_url }}"
+        working_dir: "{{ install_dir }}"
+      timeout: 60
+
+    - name: "Download example.env and rename to .env"
+      type: "command"
+      properties:
+        cmd: "wget -O .env {{ env_file_url }}"
+        working_dir: "{{ install_dir }}"
+      timeout: 60
+
+    - name: "Update .env configuration"
+      type: "command"
+      properties:
+        cmd: |
+          sed -i "s|^UPLOAD_LOCATION=.*|UPLOAD_LOCATION={{ upload_location }}|" .env && \
+          sed -i "s|^DB_DATA_LOCATION=.*|DB_DATA_LOCATION={{ db_data_location }}|" .env && \
+          sed -i "s|^# TZ=.*|TZ={{ timezone }}|" .env && \
+          sed -i "s|^IMMICH_VERSION=.*|IMMICH_VERSION={{ immich_version }}|" .env && \
+          sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD={{ db_password }}|" .env
+        working_dir: "{{ install_dir }}"
+      timeout: 90
+
+    - name: "Start Immich containers using Docker Compose"
+      type: "docker"
+      properties:
+        action: "compose"
+        subaction: "up"
+        flags: "-d"
+        working_dir: "{{ install_dir }}"
+      timeout: 600
+
+  # validate:
+  #   - name: "Check if Immich web UI is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:2283 | grep -E '^(200|301|302)$'"
+  #     timeout: 60

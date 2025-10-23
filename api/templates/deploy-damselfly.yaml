@@ -1,0 +1,99 @@
+metadata:
+  id: "deploy-damselfly"
+  name: "Damselfly"
+  description: "Damselfly is a fast, modern photo management and gallery system that organizes and displays your photo collection with AI tagging and metadata search."
+  author: "Nixopus Team"
+  icon: "🦋"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Damselfly"
+    default: "webreaper/damselfly"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Damselfly container"
+    default: "damselfly"
+    is_required: true
+
+  config_path:
+    type: "string"
+    description: "Path to store Damselfly configuration and database files"
+    default: "/volume1/dockerdata/damselfly"
+    is_required: true
+
+  pictures_path:
+    type: "string"
+    description: "Path to the folder containing photos"
+    default: "/volume1/photo"
+    is_required: true
+
+  thumbs_path:
+    type: "string"
+    description: "Path to the folder containing generated thumbnails"
+    default: "/volume1/dockerdata/damselfly/thumbs"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Damselfly web interface"
+    default: 6363
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Damselfly web service"
+    default: 6363
+    is_required: true
+
+  syno_thumbs:
+    type: "boolean"
+    description: "Enable Synology thumbnail compatibility mode"
+    default: false
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull Damselfly Docker image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Damselfly container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ config_path }}:/config"
+          - "{{ pictures_path }}:/pictures"
+          - "{{ thumbs_path }}:/thumbs"
+        environment:
+          - "SYNO_THUMBS={{ syno_thumbs }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check if Damselfly is reachable"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

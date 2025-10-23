@@ -1,0 +1,80 @@
+metadata:
+  id: "deploy-stashapp"
+  name: "StashApp"
+  description: "Self-host the StashApp media server using Docker Compose."
+  author: "Nixopus Team"
+  icon: "🎬"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  install_dir:
+    type: "string"
+    description: "Directory where StashApp docker-compose.yml and data will be stored"
+    default: "./stashapp"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Port to expose the StashApp web interface on"
+    default: 9999
+    is_required: true
+
+execution:
+  run:
+    - name: "Ensure installation directory exists"
+      type: "command"
+      properties:
+        cmd: "mkdir -p {{ install_dir }}"
+      timeout: 30
+
+    - name: "Install Docker if not installed"
+      type: "command"
+      properties:
+        cmd: "curl -fsSL https://get.docker.com | bash"
+      timeout: 300
+
+    - name: "Install Docker Compose plugin if missing"
+      type: "command"
+      properties:
+        cmd: |
+          if ! docker compose version >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+          fi
+      timeout: 300
+
+    - name: "Download StashApp docker-compose.yml"
+      type: "command"
+      properties:
+        cmd: |
+          cd {{ install_dir }} && \
+          curl -o docker-compose.yml https://raw.githubusercontent.com/stashapp/stash/master/docker/production/docker-compose.yml
+      timeout: 60
+
+    - name: "Update StashApp port mapping"
+      type: "command"
+      properties:
+        cmd: |
+          sed -i "s/9999:9999/{{ host_port }}:9999/g" {{ install_dir }}/docker-compose.yml
+      timeout: 20
+
+    - name: "Start StashApp with Docker Compose"
+      type: "command"
+      properties:
+        cmd: "cd {{ install_dir }} && docker compose up -d"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check StashApp container is running"
+  #     type: "command"
+  #     properties:
+  #       cmd: "docker ps --filter 'ancestor=stashapp/stash' --format '{{.Names}}' | grep -q stash"
+  #     timeout: 30
+
+  #   - name: "Verify StashApp web UI availability"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

@@ -1,0 +1,77 @@
+metadata:
+  id: "deploy-wikijs"
+  name: "Wiki.js"
+  description: "Self-host Wiki.js, a powerful open-source wiki platform, using Docker Compose."
+  author: "Nixopus Team"
+  icon: "📚"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  install_dir:
+    type: "string"
+    description: "Directory where Wiki.js will be cloned and Docker setup stored"
+    default: "./wikijs"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port for Wiki.js web interface"
+    default: 3000
+    is_required: true
+
+execution:
+  run:
+    - name: "Install Docker if missing"
+      type: "command"
+      properties:
+        cmd: "curl -fsSL https://get.docker.com | bash"
+      timeout: 300
+
+    - name: "Install Docker Compose plugin if missing"
+      type: "command"
+      properties:
+        cmd: |
+          if ! docker compose version >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+          fi
+      timeout: 300
+
+    - name: "Clone Wiki.js repository"
+      type: "command"
+      properties:
+        cmd: "git clone https://github.com/Requarks/wiki {{ install_dir }}"
+      timeout: 120
+
+    - name: "Start Wiki.js containers"
+      type: "command"
+      properties:
+        cmd: "cd {{ install_dir }}/dev/containers && docker compose up -d"
+      timeout: 180
+
+    - name: "Install dependencies in container"
+      type: "command"
+      properties:
+        cmd: "docker exec wiki-app yarn"
+      timeout: 120
+
+    - name: "Start Wiki.js in dev mode"
+      type: "command"
+      properties:
+        cmd: "docker exec -d wiki-app yarn dev"
+      timeout: 60
+
+  # validate:
+  #   - name: "Check Wiki.js container is running"
+  #     type: "command"
+  #     properties:
+  #       cmd: "docker ps --filter 'name=wiki-app' --format '{{.Names}}' | grep -q wiki-app"
+  #     timeout: 30
+
+  #   - name: "Verify Wiki.js web interface is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

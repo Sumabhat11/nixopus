@@ -1,0 +1,85 @@
+metadata:
+  id: "deploy-memos"
+  name: "Memos"
+  description: "Memos is a lightweight, open-source note-taking and knowledge base app that runs fast and easily via Docker."
+  author: "Nixopus Team"
+  icon: "📝"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  install_dir:
+    type: "string"
+    description: "Directory where Memos will store data and configuration"
+    default: "./memos"
+    is_required: true
+
+  image_version:
+    type: "string"
+    description: "Docker image version for Memos"
+    default: "neosmemo/memos:stable"
+    is_required: true
+
+  host_port:
+    type: "number"
+    description: "Host port to expose Memos web UI"
+    default: 5230
+    is_required: true
+
+  container_port:
+    type: "number"
+    description: "Internal container port (do not change unless needed)"
+    default: 5230
+    is_required: true
+
+  memos_mode:
+    type: "string"
+    description: "Memos runtime mode"
+    default: "prod"
+    is_required: true
+
+execution:
+  run:
+    - name: "Create installation directory"
+      type: "command"
+      properties:
+        cmd: "mkdir -p {{ install_dir }}"
+      timeout: 30
+
+    - name: "Generate docker-compose.yml for Memos"
+      type: "file"
+      properties:
+        path: "{{ install_dir }}/docker-compose.yml"
+        content: |
+          version: '3.8'
+          services:
+            memos:
+              image: {{ image_version }}
+              container_name: memos
+              ports:
+                - "{{ host_port }}:{{ container_port }}"
+              volumes:
+                - "{{ install_dir }}:/var/opt/memos"
+              environment:
+                - MEMOS_MODE={{ memos_mode }}
+                - MEMOS_PORT={{ container_port }}
+              restart: unless-stopped
+      timeout: 60
+
+    - name: "Start Memos container using Docker Compose"
+      type: "docker"
+      properties:
+        action: "compose"
+        subaction: "up"
+        flags: "-d"
+        working_dir: "{{ install_dir }}"
+      timeout: 300
+
+  # validate:
+  #   - name: "Check if Memos web UI is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

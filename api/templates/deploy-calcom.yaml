@@ -1,0 +1,85 @@
+metadata:
+  id: "deploy-calcom"
+  name: "Cal.com"
+  description: "Cal.com is an open-source scheduling platform that lets you easily book meetings, manage availability, and integrate calendars."
+  author: "Nixopus Team"
+  icon: "📅"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  repo_url:
+    type: "string"
+    description: "Git repository for Cal.com Docker setup"
+    default: "https://github.com/calcom/docker.git"
+    is_required: true
+
+  install_dir:
+    type: "string"
+    description: "Installation directory for Cal.com Docker"
+    default: "calcom-docker"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Main Cal.com container name"
+    default: "calcom"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Cal.com web interface"
+    default: 3000
+    is_required: true
+
+  webapp_url:
+    type: "string"
+    description: "Public web URL for Cal.com app"
+    default: "http://localhost:3000"
+    is_required: true
+
+execution:
+  run:
+    - name: "Clone Cal.com Docker repository"
+      type: "command"
+      properties:
+        cmd: "git clone --recursive {{ repo_url }} {{ install_dir }}"
+      timeout: 300
+
+    - name: "Change to Cal.com directory"
+      type: "command"
+      properties:
+        cmd: "cd {{ install_dir }}"
+      timeout: 30
+
+    - name: "Copy and configure .env file"
+      type: "command"
+      properties:
+        cmd: "cp .env.example .env"
+      timeout: 30
+
+    - name: "Pull latest Docker images"
+      type: "docker"
+      properties:
+        action: "compose"
+        subaction: "pull"
+        working_dir: "{{ install_dir }}"
+      timeout: 300
+
+    - name: "Start Cal.com services"
+      type: "docker"
+      properties:
+        action: "compose"
+        subaction: "up"
+        flags: "-d"
+        working_dir: "{{ install_dir }}"
+      timeout: 300
+
+  # validate:
+  #   - name: "Check if Cal.com is running"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' {{ webapp_url }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

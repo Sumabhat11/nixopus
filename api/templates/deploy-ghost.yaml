@@ -1,0 +1,131 @@
+metadata:
+  id: "deploy-ghost"
+  name: "Ghost"
+  description: "Ghost is a powerful open-source publishing platform for creating professional blogs and newsletters."
+  author: "Nixopus Team"
+  icon: "👻"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  repo_url:
+    type: "string"
+    description: "Git repository URL for Ghost Docker setup"
+    default: "https://github.com/TryGhost/ghost-docker.git"
+    is_required: true
+
+  install_dir:
+    type: "string"
+    description: "Directory to clone Ghost Docker setup into"
+    default: "/opt/ghost"
+    is_required: true
+
+  domain:
+    type: "string"
+    description: "Primary domain for your Ghost site (e.g. mysite.com)"
+    default: "mysite.com"
+    is_required: true
+
+  admin_domain:
+    type: "string"
+    description: "Optional admin domain for Ghost (e.g. admin.mysite.com)"
+    default: "admin.mysite.com"
+    is_required: false
+
+  database_root_password:
+    type: "string"
+    description: "Root password for Ghost database"
+    default: ""
+    is_required: true
+
+  database_password:
+    type: "string"
+    description: "Database password for Ghost"
+    default: ""
+    is_required: true
+
+  smtp_host:
+    type: "string"
+    description: "SMTP host for email configuration"
+    default: "smtp.example.com"
+    is_required: false
+
+  smtp_port:
+    type: "integer"
+    description: "SMTP port"
+    default: 587
+    is_required: false
+
+  smtp_user:
+    type: "string"
+    description: "SMTP username"
+    default: "user@example.com"
+    is_required: false
+
+  smtp_pass:
+    type: "string"
+    description: "SMTP password"
+    default: ""
+    is_required: false
+
+execution:
+  run:
+    - name: "Clone Ghost Docker repository"
+      type: "command"
+      properties:
+        cmd: "git clone {{ repo_url }} {{ install_dir }}"
+      timeout: 300
+
+    - name: "Change to Ghost directory"
+      type: "command"
+      properties:
+        cmd: "cd {{ install_dir }}"
+      timeout: 30
+
+    - name: "Copy example config files"
+      type: "command"
+      properties:
+        cmd: "cp .env.example .env && cp caddy/Caddyfile.example caddy/Caddyfile"
+        working_dir: "{{ install_dir }}"
+      timeout: 30
+
+    - name: "Update Ghost environment variables"
+      type: "command"
+      properties:
+        cmd: |
+          sed -i "s|DOMAIN=.*|DOMAIN={{ domain }}|" .env && \
+          sed -i "s|ADMIN_DOMAIN=.*|ADMIN_DOMAIN={{ admin_domain }}|" .env && \
+          sed -i "s|DATABASE_ROOT_PASSWORD=.*|DATABASE_ROOT_PASSWORD={{ database_root_password }}|" .env && \
+          sed -i "s|DATABASE_PASSWORD=.*|DATABASE_PASSWORD={{ database_password }}|" .env && \
+          sed -i "s|SMTP_HOST=.*|SMTP_HOST={{ smtp_host }}|" .env && \
+          sed -i "s|SMTP_PORT=.*|SMTP_PORT={{ smtp_port }}|" .env && \
+          sed -i "s|SMTP_USER=.*|SMTP_USER={{ smtp_user }}|" .env && \
+          sed -i "s|SMTP_PASS=.*|SMTP_PASS={{ smtp_pass }}|" .env
+        working_dir: "{{ install_dir }}"
+      timeout: 60
+
+    - name: "Pull latest Ghost Docker images"
+      type: "docker"
+      properties:
+        action: "compose"
+        subaction: "pull"
+        working_dir: "{{ install_dir }}"
+      timeout: 300
+
+    - name: "Start Ghost using Docker Compose"
+      type: "docker"
+      properties:
+        action: "compose"
+        subaction: "up"
+        flags: "-d"
+        working_dir: "{{ install_dir }}"
+      timeout: 300
+
+  # validate:
+  #   - name: "Check if Ghost site is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://{{ domain }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

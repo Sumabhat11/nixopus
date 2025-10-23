@@ -1,0 +1,95 @@
+metadata:
+  id: "deploy-neko"
+  name: "Neko"
+  description: "Neko is a self-hosted virtual browser that runs in Docker and can be accessed remotely through a web browser."
+  author: "Nixopus Team"
+  icon: "🌐"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  install_dir:
+    type: "string"
+    description: "Directory where Neko will be installed and docker-compose.yaml will be stored"
+    default: "./neko"
+    is_required: true
+
+  docker_compose_url:
+    type: "string"
+    description: "URL of the official Neko docker-compose file"
+    default: "https://raw.githubusercontent.com/m1k1o/neko/master/docker-compose.yaml"
+    is_required: true
+
+  local_ip:
+    type: "string"
+    description: "Local IP address to set NEKO_NAT1TO1 when running on LAN (optional)"
+    default: ""
+    is_required: false
+
+  docker_channel:
+    type: "string"
+    description: "Docker channel to install from"
+    default: "stable"
+    is_required: false
+
+execution:
+  run:
+    - name: "Create installation directory"
+      type: "command"
+      properties:
+        cmd: "mkdir -p {{ install_dir }}"
+      timeout: 30
+
+    - name: "Install Docker (if not installed)"
+      type: "command"
+      properties:
+        cmd: "curl -fsSL https://get.docker.com/ | CHANNEL={{ docker_channel }} bash"
+      timeout: 300
+
+    - name: "Install Docker Compose Plugin"
+      type: "command"
+      properties:
+        cmd: "sudo apt-get update && sudo apt-get install -y docker-compose-plugin"
+      timeout: 300
+
+    - name: "Download Neko docker-compose.yaml"
+      type: "command"
+      properties:
+        cmd: "wget -O {{ install_dir }}/docker-compose.yaml {{ docker_compose_url }}"
+      timeout: 60
+
+    - name: "Configure local IP (optional)"
+      type: "file_edit"
+      condition: "{{ local_ip != '' }}"
+      properties:
+        path: "{{ install_dir }}/docker-compose.yaml"
+        pattern: "^services:"
+        insert_before: |
+          services:
+            environment:
+              - NEKO_NAT1TO1={{ local_ip }}
+      timeout: 30
+
+    - name: "Start Neko containers"
+      type: "docker"
+      properties:
+        action: "compose"
+        subaction: "up"
+        flags: "-d"
+        working_dir: "{{ install_dir }}"
+      timeout: 300
+
+  # validate:
+  #   - name: "Check if Neko is running"
+  #     type: "command"
+  #     properties:
+  #       cmd: "sudo docker ps --filter 'name=neko' --format '{{.Names}}' | grep -q 'neko'"
+  #     timeout: 60
+
+  #   - name: "Check if Neko web interface is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost | grep -E '^(200|301|302)$'"
+  #     timeout: 60

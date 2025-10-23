@@ -1,0 +1,97 @@
+metadata:
+  id: "deploy-photoprism"
+  name: "PhotoPrism"
+  description: "PhotoPrism is an AI-powered app for browsing, organizing, and sharing your photo collection, powered by Docker."
+  author: "Nixopus Team"
+  icon: "📸"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  install_dir:
+    type: "string"
+    description: "Directory where PhotoPrism will be installed and compose.yaml stored"
+    default: "./photoprism"
+    is_required: true
+
+  compose_url:
+    type: "string"
+    description: "URL for the official PhotoPrism docker-compose YAML"
+    default: "https://dl.photoprism.app/docker/macos/compose.yaml"
+    is_required: true
+
+  admin_password:
+    type: "string"
+    description: "Initial admin password for PhotoPrism (minimum 8 characters)"
+    default: "ChangeMe123!"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to access PhotoPrism web interface"
+    default: 2342
+    is_required: true
+
+  docker_memory_limit:
+    type: "integer"
+    description: "Minimum memory limit for Docker in MB (recommended: 4096 or more)"
+    default: 4096
+    is_required: false
+
+execution:
+  run:
+    - name: "Create installation directory"
+      type: "command"
+      properties:
+        cmd: "mkdir -p {{ install_dir }}"
+      timeout: 30
+
+    - name: "Install Docker if not present"
+      type: "command"
+      properties:
+        cmd: "curl -fsSL https://get.docker.com | bash"
+      timeout: 300
+
+    - name: "Install Docker Compose plugin if not present"
+      type: "command"
+      properties:
+        cmd: "sudo apt-get update && sudo apt-get install -y docker-compose-plugin"
+      timeout: 300
+
+    - name: "Download PhotoPrism compose.yaml"
+      type: "command"
+      properties:
+        cmd: "wget -O {{ install_dir }}/compose.yaml {{ compose_url }}"
+      timeout: 60
+
+    - name: "Set admin password in compose file"
+      type: "file_edit"
+      properties:
+        path: "{{ install_dir }}/compose.yaml"
+        pattern: "(?m)^\\s*- PHOTOPRISM_ADMIN_PASSWORD=.*"
+        replacement: "      - PHOTOPRISM_ADMIN_PASSWORD={{ admin_password }}"
+      timeout: 30
+
+    - name: "Start PhotoPrism containers"
+      type: "docker"
+      properties:
+        action: "compose"
+        subaction: "up"
+        flags: "-d"
+        working_dir: "{{ install_dir }}"
+      timeout: 300
+
+  # validate:
+  #   - name: "Check PhotoPrism container status"
+  #     type: "command"
+  #     properties:
+  #       cmd: "docker ps --filter 'name=photoprism' --format '{{.Names}}' | grep -q 'photoprism'"
+  #     timeout: 60
+
+  #   - name: "Check if PhotoPrism web UI is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

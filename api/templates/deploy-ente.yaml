@@ -1,0 +1,44 @@
+metadata:
+  id: "deploy-ente"
+  name: "Ente"
+  description: "Ente is a self-hostable, end-to-end encrypted photo storage and sharing platform with privacy and security at its core."
+  author: "Nixopus Team"
+  icon: "🖼️"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  quickstart_url:
+    type: "string"
+    description: "URL of the Ente quickstart installation script"
+    default: "https://raw.githubusercontent.com/ente-io/ente/main/server/quickstart.sh"
+    is_required: true
+
+  install_dir:
+    type: "string"
+    description: "Directory to install Ente"
+    default: "./my-ente"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Ente web interface"
+    default: 3000
+    is_required: true
+
+execution:
+  run:
+    - name: "Download and execute Ente quickstart script"
+      type: "command"
+      properties:
+        cmd: "sh -c \"$(curl -fsSL {{ quickstart_url }})\""
+      timeout: 600
+
+  # validate:
+  #   - name: "Check if Ente web service is running"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

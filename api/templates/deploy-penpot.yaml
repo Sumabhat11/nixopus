@@ -1,0 +1,83 @@
+metadata:
+  id: "deploy-penpot"
+  name: "Penpot"
+  description: "Penpot is an open-source design and prototyping platform for cross-domain teams. Self-host Penpot easily with Docker."
+  author: "Nixopus Team"
+  icon: "🎨"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  install_dir:
+    type: "string"
+    description: "Directory where Penpot will be installed and docker-compose.yml will be stored"
+    default: "./penpot"
+    is_required: true
+
+  docker_compose_url:
+    type: "string"
+    description: "URL of the official Penpot docker-compose file"
+    default: "https://raw.githubusercontent.com/penpot/penpot/main/docker-compose.yaml"
+    is_required: true
+
+  docker_image_tag:
+    type: "string"
+    description: "Penpot Docker image tag or release version"
+    default: "latest"
+    is_required: false
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Penpot web interface"
+    default: 9001
+    is_required: true
+
+execution:
+  run:
+    - name: "Create installation directory"
+      type: "command"
+      properties:
+        cmd: "mkdir -p {{ install_dir }}"
+      timeout: 30
+
+    - name: "Install Docker (if not installed)"
+      type: "command"
+      properties:
+        cmd: "curl -fsSL https://get.docker.com | bash"
+      timeout: 300
+
+    - name: "Install Docker Compose Plugin (if not installed)"
+      type: "command"
+      properties:
+        cmd: "sudo apt-get update && sudo apt-get install -y docker-compose-plugin"
+      timeout: 300
+
+    - name: "Download Penpot docker-compose.yaml"
+      type: "command"
+      properties:
+        cmd: "wget -O {{ install_dir }}/docker-compose.yaml {{ docker_compose_url }}"
+      timeout: 60
+
+    - name: "Start Penpot containers"
+      type: "docker"
+      properties:
+        action: "compose"
+        subaction: "up"
+        flags: "-d"
+        working_dir: "{{ install_dir }}"
+      timeout: 300
+
+  # validate:
+  #   - name: "Check Penpot container status"
+  #     type: "command"
+  #     properties:
+  #       cmd: "docker ps --filter 'name=penpot' --format '{{.Names}}' | grep -q 'penpot'"
+  #     timeout: 60
+
+  #   - name: "Check if Penpot web interface is accessible"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

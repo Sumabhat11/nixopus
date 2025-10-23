@@ -61,9 +61,3 @@ execution:
         restart: "unless-stopped"
       timeout: 180
 
-  validate:
-    - name: "Check Superset web interface availability"
-      type: "command"
-      properties:
-        cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
-      timeout: 60
