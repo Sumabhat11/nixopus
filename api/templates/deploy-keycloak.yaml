@@ -1,0 +1,93 @@
+metadata:
+  id: "deploy-keycloak"
+  name: "Keycloak"
+  description: "Keycloak is an open-source identity and access management solution."
+  author: "Nixopus Team"
+  icon: "🔐"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Keycloak"
+    default: "quay.io/keycloak/keycloak"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "keycloak"
+    is_required: true
+
+  host_http_port:
+    type: "integer"
+    description: "Host HTTP port for Keycloak"
+    default: 8080
+    is_required: true
+
+  container_http_port:
+    type: "integer"
+    description: "Container HTTP port for Keycloak"
+    default: 8080
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Volume to persist Keycloak data"
+    default: "./keycloak-data:/opt/keycloak/data"
+    is_required: true
+
+  admin_user:
+    type: "string"
+    description: "Bootstrap admin username"
+    default: "admin"
+    is_required: true
+
+  admin_password:
+    type: "string"
+    description: "Bootstrap admin password"
+    default: "admin"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Keycloak image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Keycloak container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports:
+          - "{{ host_http_port }}:{{ container_http_port }}"
+        volumes:
+          - "{{ data_volume }}"
+        environment:
+          - "KC_BOOTSTRAP_ADMIN_USERNAME={{ admin_user }}"
+          - "KC_BOOTSTRAP_ADMIN_PASSWORD={{ admin_password }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check Keycloak HTTP response"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_http_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

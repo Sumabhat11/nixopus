@@ -1,0 +1,76 @@
+metadata:
+  id: "deploy-appflowy"
+  name: "AppFlowy"
+  description: "AppFlowy is an open-source, self-hosted alternative to Notion, offering a modular and customizable workspace."
+  author: "Nixopus Team"
+  icon: "📓"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for AppFlowy"
+    default: "appflowyio/appflowy_client"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "main"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "appflowy"
+    is_required: true
+
+  display:
+    type: "string"
+    description: "X11 display environment variable"
+    default: ":0"
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Volume or host path to persist AppFlowy data"
+    default: "appflowy-data:/home/appflowy"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull AppFlowy image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run AppFlowy container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "3000:3000"
+        volumes:
+          - "{{ data_volume }}"
+          - "/tmp/.X11-unix:/tmp/.X11-unix"
+          - "/dev/dri:/dev/dri"
+          - "/var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket"
+        environment:
+          - "DISPLAY={{ display }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from AppFlowy"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:3000 | grep -E '^(200|301|302)$'"
+  #     timeout: 60

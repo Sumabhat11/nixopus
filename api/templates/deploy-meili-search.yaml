@@ -1,0 +1,78 @@
+metadata:
+  id: "deploy-meilisearch"
+  name: "Meilisearch"
+  description: "Meilisearch is an open-source, fast, and relevant search engine designed for developers."
+  author: "Nixopus Team"
+  icon: "🔍"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Meilisearch"
+    default: "getmeili/meilisearch"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "v1.16"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "meilisearch"
+    is_required: true
+
+  host_http_port:
+    type: "integer"
+    description: "Host HTTP port for Meilisearch API"
+    default: 7700
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Volume or host path to persist Meilisearch data"
+    default: "./meili_data:/meili_data"
+    is_required: true
+
+  master_key:
+    type: "string"
+    description: "Master key for Meilisearch instance"
+    default: "your_master_key"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Meilisearch image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Meilisearch container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_http_port }}:7700"
+        volumes: "{{ data_volume }}"
+        environment:
+          - "MEILI_MASTER_KEY={{ master_key }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from Meilisearch"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_http_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

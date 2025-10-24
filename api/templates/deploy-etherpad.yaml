@@ -1,0 +1,86 @@
+metadata:
+  id: "deploy-etherpad"
+  name: "Etherpad"
+  description: "Etherpad is an open-source online editor providing real-time collaborative editing."
+  author: "Nixopus Team"
+  icon: "📝"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Etherpad"
+    default: "etherpad/etherpad"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "etherpad"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port for Etherpad"
+    default: 9001
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Etherpad"
+    default: 9001
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Volume to persist Etherpad data"
+    default: "./etherpad-data:/opt/etherpad-lite/var"
+    is_required: true
+
+  admin_password:
+    type: "string"
+    description: "Admin password for Etherpad"
+    default: "admin"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Etherpad image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Etherpad container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports:
+          - "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ data_volume }}"
+        environment:
+          - "ETHERPAD_ADMIN_PASSWORD={{ admin_password }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check Etherpad HTTP endpoint"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

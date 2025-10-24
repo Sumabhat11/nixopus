@@ -1,0 +1,117 @@
+metadata:
+  id: "deploy-pihole"
+  name: "Pi-hole"
+  description: "Pi-hole is a network-wide ad blocker that acts as a DNS sinkhole."
+  author: "Nixopus Team"
+  icon: "🧩"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Pi-hole"
+    default: "pihole/pihole"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "pihole"
+    is_required: true
+
+  host_dns_port:
+    type: "integer"
+    description: "Host DNS port to expose"
+    default: 53
+    is_required: true
+
+  container_dns_port:
+    type: "integer"
+    description: "Container DNS port"
+    default: 53
+    is_required: true
+
+  host_http_port:
+    type: "integer"
+    description: "Host port for Pi-hole web interface"
+    default: 8080
+    is_required: true
+
+  container_http_port:
+    type: "integer"
+    description: "Container port for Pi-hole web interface"
+    default: 80
+    is_required: true
+
+  data_volume_pihole:
+    type: "string"
+    description: "Volume for Pi-hole data"
+    default: "./pihole-data:/etc/pihole"
+    is_required: true
+
+  data_volume_dnsmasq:
+    type: "string"
+    description: "Volume for dnsmasq configuration"
+    default: "./dnsmasq.d:/etc/dnsmasq.d"
+    is_required: true
+
+  timezone:
+    type: "string"
+    description: "System timezone"
+    default: "UTC"
+    is_required: true
+
+  web_password:
+    type: "string"
+    description: "Password for Pi-hole admin dashboard"
+    default: "admin"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Pi-hole image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Pi-hole container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports:
+          - "{{ host_dns_port }}:{{ container_dns_port }}/tcp"
+          - "{{ host_dns_port }}:{{ container_dns_port }}/udp"
+          - "{{ host_http_port }}:{{ container_http_port }}/tcp"
+        volumes:
+          - "{{ data_volume_pihole }}"
+          - "{{ data_volume_dnsmasq }}"
+        environment:
+          - "TZ={{ timezone }}"
+          - "WEBPASSWORD={{ web_password }}"
+          - "FTLCONF_dns_listeningMode=all"
+        cap_add:
+          - "NET_ADMIN"
+        restart: "unless-stopped"
+      timeout: 180
+
+  # validate:
+  #   - name: "Check Pi-hole web interface availability"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_http_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

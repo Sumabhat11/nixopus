@@ -1,9 +1,9 @@
 metadata:
-  id: "deploy-n8n"
-  name: "n8n"
-  description: "n8n is a workflow automation tool that lets you connect applications and automate tasks easily."
+  id: "deploy-gitea"
+  name: "Gitea"
+  description: "Gitea is a lightweight, self-hosted Git service with a focus on simplicity and ease of use."
   author: "Nixopus Team"
-  icon: "🔄"
+  icon: "🐙"
   category: "Containers"
   type: "install"
   version: "1.0.0"
@@ -12,8 +12,8 @@ metadata:
 variables:
   image:
     type: "string"
-    description: "Docker image for n8n"
-    default: "docker.n8n.io/n8nio/n8n"
+    description: "Docker image for Gitea"
+    default: "gitea/gitea"
     is_required: true
 
   tag:
@@ -25,36 +25,36 @@ variables:
   container_name:
     type: "string"
     description: "Name of the container"
-    default: "n8n"
+    default: "gitea"
     is_required: true
 
-  host_port:
+  host_http_port:
     type: "integer"
-    description: "Host port to expose"
-    default: 5678
+    description: "Host HTTP port for web interface"
+    default: 3000
     is_required: true
 
-  container_port:
+  host_ssh_port:
     type: "integer"
-    description: "Container port to map"
-    default: 5678
+    description: "Host SSH port for Git operations"
+    default: 22
     is_required: true
 
   data_volume:
     type: "string"
-    description: "Volume or host path to persist n8n data"
-    default: "n8n_data:/home/node/.n8n"
+    description: "Volume or host path to persist Gitea data"
+    default: "./gitea:/data"
     is_required: true
 
   timezone:
     type: "string"
     description: "Timezone (TZ) environment variable"
     default: "UTC"
-    is_required: false
+    is_required: true
 
 execution:
   run:
-    - name: "Pull n8n image"
+    - name: "Pull Gitea image"
       type: "docker"
       properties:
         action: "pull"
@@ -62,26 +62,23 @@ execution:
         tag: "{{ tag }}"
       timeout: 300
 
-    - name: "Run n8n container"
+    - name: "Run Gitea container"
       type: "docker"
       properties:
         action: "run"
         name: "{{ container_name }}"
         image: "{{ image }}"
         tag: "{{ tag }}"
-        ports: "{{ host_port }}:{{ container_port }}"
+        ports: "{{ host_http_port }}:3000,{{ host_ssh_port }}:22"
         volumes: "{{ data_volume }}"
         environment:
-          - "N8N_PORT={{ container_port }}"
-          - "N8N_HOST=0.0.0.0"
-          - "WEBHOOK_URL=http://localhost:{{ host_port }}"
           - "TZ={{ timezone }}"
         restart: "unless-stopped"
       timeout: 120
 
-  validate:
-    - name: "Check HTTP response from n8n"
-      type: "command"
-      properties:
-        cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
-      timeout: 60
+  # validate:
+  #   - name: "Check HTTP response from Gitea web interface"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_http_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

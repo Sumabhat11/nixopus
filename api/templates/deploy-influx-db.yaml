@@ -1,0 +1,108 @@
+metadata:
+  id: "deploy-influxdb"
+  name: "InfluxDB"
+  description: "InfluxDB is an open-source time-series database developed by InfluxData."
+  author: "Nixopus Team"
+  icon: "📈"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for InfluxDB"
+    default: "influxdb"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Container name"
+    default: "influxdb"
+    is_required: true
+
+  host_http_port:
+    type: "integer"
+    description: "Host HTTP port for InfluxDB"
+    default: 8086
+    is_required: true
+
+  container_http_port:
+    type: "integer"
+    description: "Container HTTP port for InfluxDB"
+    default: 8086
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Volume to persist InfluxDB data"
+    default: "./influxdb_data:/var/lib/influxdb2"
+    is_required: true
+
+  init_username:
+    type: "string"
+    description: "Initial admin username"
+    default: "admin"
+    is_required: true
+
+  init_password:
+    type: "string"
+    description: "Initial admin password"
+    default: "admin123"
+    is_required: true
+
+  init_org:
+    type: "string"
+    description: "Initial organization name"
+    default: "myorg"
+    is_required: true
+
+  init_bucket:
+    type: "string"
+    description: "Initial bucket name"
+    default: "mybucket"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull InfluxDB image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run InfluxDB container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports:
+          - "{{ host_http_port }}:{{ container_http_port }}"
+        volumes:
+          - "{{ data_volume }}"
+        environment:
+          - "DOCKER_INFLUXDB_INIT_MODE=setup"
+          - "DOCKER_INFLUXDB_INIT_USERNAME={{ init_username }}"
+          - "DOCKER_INFLUXDB_INIT_PASSWORD={{ init_password }}"
+          - "DOCKER_INFLUXDB_INIT_ORG={{ init_org }}"
+          - "DOCKER_INFLUXDB_INIT_BUCKET={{ init_bucket }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check InfluxDB HTTP endpoint"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_http_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

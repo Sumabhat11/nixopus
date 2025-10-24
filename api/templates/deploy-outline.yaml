@@ -1,0 +1,106 @@
+metadata:
+  id: "deploy-outline"
+  name: "Outline"
+  description: "Outline is a fast, collaborative knowledge base for your team, built using React and Node.js."
+  author: "Nixopus Team"
+  icon: "📘"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: true
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Outline"
+    default: "outlinewiki/outline"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "outline"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose"
+    default: 3000
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port to map"
+    default: 3000
+    is_required: true
+
+  storage_dir:
+    type: "string"
+    description: "Directory for Outline storage"
+    default: "/path/to/storage"
+    is_required: true
+
+  redis_password:
+    type: "string"
+    description: "Password for Redis"
+    default: "your-redis-password"
+    is_required: true
+
+  postgres_user:
+    type: "string"
+    description: "PostgreSQL username"
+    default: "outline"
+    is_required: true
+
+  postgres_password:
+    type: "string"
+    description: "PostgreSQL password"
+    default: "your-postgres-password"
+    is_required: true
+
+  postgres_db:
+    type: "string"
+    description: "PostgreSQL database name"
+    default: "outline"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Outline image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Outline container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ storage_dir }}:/var/lib/outline"
+        environment:
+          REDIS_PASSWORD: "{{ redis_password }}"
+          POSTGRES_USER: "{{ postgres_user }}"
+          POSTGRES_PASSWORD: "{{ postgres_password }}"
+          POSTGRES_DB: "{{ postgres_db }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from Outline"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

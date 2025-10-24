@@ -1,0 +1,87 @@
+metadata:
+  id: "deploy-glances"
+  name: "Glances"
+  description: "Glances is a cross-platform system monitoring tool that provides a comprehensive overview of various system resources."
+  author: "Nixopus Team"
+  icon: "📊"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Glances"
+    default: "nicolargo/glances"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "glances"
+    is_required: true
+
+  host_http_port:
+    type: "integer"
+    description: "Host HTTP port for Glances web interface"
+    default: 61208
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Volume or host path to persist Glances data"
+    default: "./glances:/glances"
+    is_required: true
+
+  glances_conf:
+    type: "string"
+    description: "Path to custom glances.conf file"
+    default: "./glances.conf:/etc/glances/glances.conf"
+    is_required: false
+
+  os_release:
+    type: "string"
+    description: "Path to /etc/os-release to display host OS info"
+    default: "/etc/os-release:/etc/os-release:ro"
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull Glances image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Glances container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_http_port }}:61208"
+        volumes:
+          - "{{ data_volume }}"
+          - "{{ glances_conf }}"
+          - "{{ os_release }}"
+        environment:
+          - "GLANCES_OPT=-w"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from Glances"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_http_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

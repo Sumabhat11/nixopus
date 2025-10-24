@@ -1,0 +1,113 @@
+metadata:
+  id: "deploy-clickhouse"
+  name: "ClickHouse"
+  description: "ClickHouse is an open-source columnar database management system designed for real-time analytics using SQL queries."
+  author: "Nixopus Team"
+  icon: "📊"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: true
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for ClickHouse"
+    default: "clickhouse/clickhouse-server"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "clickhouse-server"
+    is_required: true
+
+  host_http_port:
+    type: "integer"
+    description: "Host HTTP port for ClickHouse"
+    default: 8123
+    is_required: true
+
+  container_http_port:
+    type: "integer"
+    description: "Container HTTP port for ClickHouse"
+    default: 8123
+    is_required: true
+
+  host_native_port:
+    type: "integer"
+    description: "Host native port for ClickHouse"
+    default: 9000
+    is_required: true
+
+  container_native_port:
+    type: "integer"
+    description: "Container native port for ClickHouse"
+    default: 9000
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Volume to persist ClickHouse data"
+    default: "./clickhouse-data:/var/lib/clickhouse"
+    is_required: true
+
+  log_volume:
+    type: "string"
+    description: "Volume to persist ClickHouse logs"
+    default: "./clickhouse-logs:/var/log/clickhouse-server"
+    is_required: true
+
+  timezone:
+    type: "string"
+    description: "Timezone setting"
+    default: "UTC"
+    is_required: true
+
+  clickhouse_password:
+    type: "string"
+    description: "Password for default user"
+    default: "changeme"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull ClickHouse image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run ClickHouse container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports:
+          - "{{ host_http_port }}:{{ container_http_port }}"
+          - "{{ host_native_port }}:{{ container_native_port }}"
+        volumes:
+          - "{{ data_volume }}"
+          - "{{ log_volume }}"
+        environment:
+          - "CLICKHOUSE_PASSWORD={{ clickhouse_password }}"
+          - "TZ={{ timezone }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check ClickHouse HTTP endpoint"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_http_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60
