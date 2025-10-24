@@ -1,3 +1,12 @@
+# [0.1.0-alpha.51](https://github.com/Sumabhat11/nixopus/compare/v0.1.0-alpha.50...v0.1.0-alpha.51) (2025-10-24)
+
+
+### Features
+
+* add extention templates-2 ([eb11e63](https://github.com/Sumabhat11/nixopus/commit/eb11e63d77769d06c086bd66dfecfccb5663a368))
+
+
+
 # [0.1.0-alpha.50](https://github.com/Sumabhat11/nixopus/compare/v0.1.0-alpha.41...v0.1.0-alpha.50) (2025-10-23)
 
 
