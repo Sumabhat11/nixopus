@@ -67,20 +67,17 @@ execution:
       timeout: 60
 
     - name: "Set admin password in compose file"
-      type: "file_edit"
+      type: "command"
       properties:
-        path: "{{ install_dir }}/compose.yaml"
-        pattern: "(?m)^\\s*- PHOTOPRISM_ADMIN_PASSWORD=.*"
-        replacement: "      - PHOTOPRISM_ADMIN_PASSWORD={{ admin_password }}"
+        cmd: |
+          sed -i 's/- PHOTOPRISM_ADMIN_PASSWORD=.*/- PHOTOPRISM_ADMIN_PASSWORD={{ admin_password }}/' {{ install_dir }}/compose.yaml
       timeout: 30
 
     - name: "Start PhotoPrism containers"
-      type: "docker"
+      type: "docker_compose"
       properties:
-        action: "compose"
-        subaction: "up"
-        flags: "-d"
-        working_dir: "{{ install_dir }}"
+        action: "up"
+        file: "{{ install_dir }}/compose.yaml"
       timeout: 300
 
   # validate:

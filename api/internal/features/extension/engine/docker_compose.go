@@ -32,6 +32,7 @@ func (dockerComposeModule) Execute(_ *ssh.SSH, step types.SpecStep, vars map[str
 		"up":    func() (string, func(), error) { return composeUp(svc, file) },
 		"down":  func() (string, func(), error) { return composeDown(svc, file) },
 		"build": func() (string, func(), error) { return composeBuild(svc, file) },
+		"pull":  func() (string, func(), error) { return composePull(svc, file) },
 	}
 
 	h, ok := handlers[action]
@@ -70,6 +71,13 @@ func composeBuild(svc *deploydocker.DockerService, file string) (string, func(),
 		return "", nil, err
 	}
 	return "compose build", nil, nil
+}
+
+func composePull(svc *deploydocker.DockerService, file string) (string, func(), error) {
+	if err := svc.ComposePull(file); err != nil {
+		return "", nil, err
+	}
+	return "compose pull", nil, nil
 }
 
 func init() {

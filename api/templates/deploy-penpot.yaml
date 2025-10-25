@@ -61,12 +61,10 @@ execution:
       timeout: 60
 
     - name: "Start Penpot containers"
-      type: "docker"
+      type: "docker_compose"
       properties:
-        action: "compose"
-        subaction: "up"
-        flags: "-d"
-        working_dir: "{{ install_dir }}"
+        action: "up"
+        file: "{{ install_dir }}/docker-compose.yaml"
       timeout: 300
 
   # validate:

@@ -46,6 +46,7 @@ type DockerRepository interface {
 	ComposeUp(composeFilePath string, envVars map[string]string) error
 	ComposeDown(composeFilePath string) error
 	ComposeBuild(composeFilePath string, envVars map[string]string) error
+	ComposePull(composeFilePath string) error
 	RemoveImage(imageName string, opts image.RemoveOptions) error
 	PruneBuildCache(opts types.BuildCachePruneOptions) error
 	PruneImages(opts filters.Args) (image.PruneReport, error)
@@ -361,6 +362,17 @@ func (s *DockerService) ComposeBuild(composeFilePath string, envVars map[string]
 	output, err := client.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to build docker compose services: %v, output: %s", err, output)
+	}
+	return nil
+}
+
+// ComposePull pulls the Docker Compose services
+func (s *DockerService) ComposePull(composeFilePath string) error {
+	client := ssh.NewSSH()
+	command := fmt.Sprintf("docker compose -f %s pull", composeFilePath)
+	output, err := client.RunCommand(command)
+	if err != nil {
+		return fmt.Errorf("failed to pull docker compose services: %v, output: %s", err, output)
 	}
 	return nil
 }

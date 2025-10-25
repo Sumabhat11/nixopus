@@ -23,13 +23,13 @@ variables:
     is_required: true
 
   host_port:
-    type: "number"
+    type: "integer"
     description: "Host port to expose Memos web UI"
     default: 5230
     is_required: true
 
   container_port:
-    type: "number"
+    type: "integer"
     description: "Internal container port (do not change unless needed)"
     default: 5230
     is_required: true
@@ -49,10 +49,10 @@ execution:
       timeout: 30
 
     - name: "Generate docker-compose.yml for Memos"
-      type: "file"
+      type: "command"
       properties:
-        path: "{{ install_dir }}/docker-compose.yml"
-        content: |
+        cmd: |
+          cat > {{ install_dir }}/docker-compose.yml << 'EOF'
           version: '3.8'
           services:
             memos:
@@ -66,15 +66,14 @@ execution:
                 - MEMOS_MODE={{ memos_mode }}
                 - MEMOS_PORT={{ container_port }}
               restart: unless-stopped
+          EOF
       timeout: 60
 
     - name: "Start Memos container using Docker Compose"
-      type: "docker"
+      type: "docker_compose"
       properties:
-        action: "compose"
-        subaction: "up"
-        flags: "-d"
-        working_dir: "{{ install_dir }}"
+        action: "up"
+        file: "{{ install_dir }}/docker-compose.yml"
       timeout: 300
 
   # validate:

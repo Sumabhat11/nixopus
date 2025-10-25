@@ -143,7 +143,7 @@ func (p *Parser) validateDockerComposeStep(step ExecutionStep) error {
 	}
 	action, _ := step.Properties["action"].(string)
 	switch action {
-	case "up", "down", "build":
+	case "up", "down", "build", "pull":
 		return nil
 	default:
 		return fmt.Errorf("unsupported docker_compose action: %s", action)

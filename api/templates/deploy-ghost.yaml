@@ -107,20 +107,17 @@ execution:
       timeout: 60
 
     - name: "Pull latest Ghost Docker images"
-      type: "docker"
+      type: "docker_compose"
       properties:
-        action: "compose"
-        subaction: "pull"
-        working_dir: "{{ install_dir }}"
+        action: "pull"
+        file: "{{ install_dir }}/docker-compose.yml"
       timeout: 300
 
     - name: "Start Ghost using Docker Compose"
-      type: "docker"
+      type: "docker_compose"
       properties:
-        action: "compose"
-        subaction: "up"
-        flags: "-d"
-        working_dir: "{{ install_dir }}"
+        action: "up"
+        file: "{{ install_dir }}/docker-compose.yml"
       timeout: 300
 
   # validate:

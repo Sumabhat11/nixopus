@@ -61,24 +61,18 @@ execution:
       timeout: 60
 
     - name: "Configure local IP (optional)"
-      type: "file_edit"
+      type: "command"
       condition: "{{ local_ip != '' }}"
       properties:
-        path: "{{ install_dir }}/docker-compose.yaml"
-        pattern: "^services:"
-        insert_before: |
-          services:
-            environment:
-              - NEKO_NAT1TO1={{ local_ip }}
+        cmd: |
+          sed -i '/^services:/a\\    environment:\\n      - NEKO_NAT1TO1={{ local_ip }}' {{ install_dir }}/docker-compose.yaml
       timeout: 30
 
     - name: "Start Neko containers"
-      type: "docker"
+      type: "docker_compose"
       properties:
-        action: "compose"
-        subaction: "up"
-        flags: "-d"
-        working_dir: "{{ install_dir }}"
+        action: "up"
+        file: "{{ install_dir }}/docker-compose.yaml"
       timeout: 300
 
   # validate:
