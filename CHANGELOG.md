@@ -1,3 +1,12 @@
+# [0.1.0-alpha.52](https://github.com/Sumabhat11/nixopus/compare/v0.1.0-alpha.51...v0.1.0-alpha.52) (2025-10-25)
+
+
+### Bug Fixes
+
+* extension templat syntax ([75dd4fb](https://github.com/Sumabhat11/nixopus/commit/75dd4fbf5d6c3b032e169864664c4fc7aef51510))
+
+
+
 # [0.1.0-alpha.51](https://github.com/Sumabhat11/nixopus/compare/v0.1.0-alpha.50...v0.1.0-alpha.51) (2025-10-24)
 
 
