@@ -1,0 +1,72 @@
+metadata:
+  id: "deploy-cyberchef"
+  name: "CyberChef"
+  description: "CyberChef is a web app for encryption, encoding, compression and data analysis, letting you manipulate data with a wide range of tools."
+  author: "Nixopus Team"
+  icon: "🛠️"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for CyberChef"
+    default: "gchq/cyberchef"
+    is_required: true
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+  container_name:
+    type: "string"
+    description: "Name of the CyberChef container"
+    default: "cyberchef"
+    is_required: true
+  host_port:
+    type: "integer"
+    description: "Host port to expose CyberChef web interface"
+    default: 8080
+    is_required: true
+  container_port:
+    type: "integer"
+    description: "Container port CyberChef listens on"
+    default: 8080
+    is_required: true
+  data_volume:
+    type: "string"
+    description: "Host path to mount for persistent data (optional, e.g., custom recipes)"
+    default: "./cyberchef_data"
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull CyberChef image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run CyberChef container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ data_volume }}:/cyberchef_data"
+        restart: "unless-stopped"
+      timeout: 180
+
+  # validate:
+  #   - name: "Check HTTP response from CyberChef"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }}/ | grep -E '^(200|301|302)$'"
+  #     timeout: 60

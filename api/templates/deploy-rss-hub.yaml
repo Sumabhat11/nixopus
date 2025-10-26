@@ -1,0 +1,92 @@
+metadata:
+  id: "deploy-rsshub"
+  name: "RSSHub"
+  description: "RSSHub is an open-source, highly extensible feed generator: it can create RSS feeds for sites that don’t supply them natively."
+  author: "Nixopus Team"
+  icon: "📡"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for RSSHub"
+    default: "diygod/rsshub"
+    is_required: true
+  tag:
+    type: "string"
+    description: "Docker image tag for RSSHub"
+    default: "latest"
+    is_required: true
+  container_name:
+    type: "string"
+    description: "Name of the RSSHub container"
+    default: "rsshub"
+    is_required: true
+  host_port:
+    type: "integer"
+    description: "Host port to expose for RSSHub"
+    default: 1200
+    is_required: true
+  container_port:
+    type: "integer"
+    description: "Container port RSSHub listens on"
+    default: 1200
+    is_required: true
+  enable_redis:
+    type: "boolean"
+    description: "Enable Redis service for RSSHub (recommended for caching)"
+    default: true
+    is_required: false
+  data_volume:
+    type: "string"
+    description: "Host path to mount for RSSHub persistent data (e.g., Redis, caches)"
+    default: "./rsshub_data"
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull RSSHub image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run RSSHub container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ data_volume }}:/data"
+        environment:
+          - "CACHE_TYPE=redis"
+          - "REDIS_URL=redis://redis:6379/"
+        restart: "unless-stopped"
+      timeout: 180
+
+    - name: "Run Redis container (if enabled)"
+      type: "docker"
+      properties:
+        when: "{{ enable_redis }}"
+        action: "run"
+        name: "redis"
+        image: "redis:alpine"
+        volumes:
+          - "{{ data_volume }}/redis:/data"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from RSSHub"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }}/ | grep -E '^(200|301|302)$'"
+  #     timeout: 60

@@ -1,0 +1,99 @@
+metadata:
+  id: "deploy-keepassxc"
+  name: "KeePassXC"
+  description: "KeePassXC is a free and open-source password manager that stores and manages your most sensitive information."
+  author: "Nixopus Team"
+  icon: "🔐"
+  category: "Security"
+  type: "install"
+  version: "1.0.0"
+  isVerified: true
+
+variables:
+  compose_file:
+    type: "string"
+    description: "Path to the Docker Compose file"
+    default: "./docker-compose.yml"
+    is_required: true
+  container_name:
+    type: "string"
+    description: "Name of the KeePassXC container"
+    default: "keepassxc"
+    is_required: true
+  host_port:
+    type: "integer"
+    description: "Host port to expose KeePassXC web interface"
+    default: 3001
+    is_required: true
+  container_port:
+    type: "integer"
+    description: "Container port KeePassXC listens on"
+    default: 3000
+    is_required: true
+  data_volume:
+    type: "string"
+    description: "Host path to mount for persistent data"
+    default: "./keepassxc_data"
+    is_required: true
+  custom_user:
+    type: "string"
+    description: "Custom username for basic HTTP authentication"
+    default: "admin"
+    is_required: true
+  password:
+    type: "string"
+    description: "Password for basic HTTP authentication"
+    default: "password"
+    is_required: true
+  timezone:
+    type: "string"
+    description: "Timezone for the container"
+    default: "UTC"
+    is_required: true
+  uid:
+    type: "integer"
+    description: "User ID for the container"
+    default: 1000
+    is_required: true
+  gid:
+    type: "integer"
+    description: "Group ID for the container"
+    default: 1000
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull KeePassXC image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "lscr.io/linuxserver/keepassxc"
+        tag: "latest"
+      timeout: 300
+
+    - name: "Run KeePassXC container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "lscr.io/linuxserver/keepassxc"
+        tag: "latest"
+        ports:
+          - "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ data_volume }}:/config"
+        environment:
+          - CUSTOM_USER={{ custom_user }}
+          - PASSWORD={{ password }}
+          - TZ={{ timezone }}
+          - PUID={{ uid }}
+          - PGID={{ gid }}
+        restart: "unless-stopped"
+      timeout: 180
+
+  validate:
+    - name: "Check HTTP response from KeePassXC"
+      type: "command"
+      properties:
+        cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }}/ | grep -E '^(200|301|302)$'"
+      timeout: 60

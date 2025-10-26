@@ -1,0 +1,76 @@
+metadata:
+  id: "deploy-zulip"
+  name: "Zulip"
+  description: "Zulip is a powerful open-source group chat and collaboration platform designed for efficient team communication."
+  author: "Nixopus Team"
+  icon: "💬"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Zulip"
+    default: "zulip/zulip"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "zulip"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Zulip"
+    default: 80
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port to map"
+    default: 80
+    is_required: true
+
+  data_dir:
+    type: "string"
+    description: "Path on host for persisting Zulip data"
+    default: "~/zulip-data"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Zulip image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Zulip container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes: "{{ data_dir }}:/data"
+        restart: "unless-stopped"
+      timeout: 180
+
+  # validate:
+  #   - name: "Check HTTP response from Zulip"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

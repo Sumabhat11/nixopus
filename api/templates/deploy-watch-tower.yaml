@@ -1,0 +1,71 @@
+metadata:
+  id: "deploy-watchtower"
+  name: "Watchtower"
+  description: "Watchtower is a container-based service that monitors your Docker containers and automatically updates them when new images are published."
+  author: "Nixopus Team"
+  icon: "🔄"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Watchtower"
+    default: "containrrr/watchtower"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "watchtower"
+    is_required: true
+
+  interval_seconds:
+    type: "integer"
+    description: "Interval in seconds between update checks"
+    default: 86400
+    is_required: true
+
+  cleanup:
+    type: "boolean"
+    description: "Whether to remove old images after updating"
+    default: true
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull Watchtower image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Watchtower container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock"
+        command: "--interval {{ interval_seconds }} {{ if cleanup }}--cleanup{{ end }}"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check Watchtower is running"
+  #     type: "command"
+  #     properties:
+  #       cmd: "docker ps --filter name={{ container_name }} --filter status=running --format '{{.Names}}' | grep -E '^{{ container_name }}$'"
+  #     timeout: 60

@@ -1,0 +1,76 @@
+metadata:
+  id: "deploy-trilium-notes"
+  name: "Trilium Notes"
+  description: "Trilium Notes is a hierarchical note-taking application with focus on building large personal knowledge bases."
+  author: "Nixopus Team"
+  icon: "📝"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Trilium Notes"
+    default: "zadam/trilium"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "0.52-latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "trilium-notes"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose"
+    default: 8080
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port to map"
+    default: 8080
+    is_required: true
+
+  data_dir:
+    type: "string"
+    description: "Path on host for persisting Trilium data"
+    default: "~/trilium-data"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Trilium Notes image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Trilium Notes container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes: "{{ data_dir }}:/home/node/trilium-data"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from Trilium Notes"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

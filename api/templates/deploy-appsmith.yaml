@@ -1,0 +1,79 @@
+metadata:
+  id: "deploy-appsmith"
+  name: "Appsmith"
+  description: "Appsmith is an open-source low-code platform to build internal applications, self-hostable via Docker or Docker Compose."
+  author: "Nixopus Team"
+  icon: "🧩"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Appsmith (CE or EE)"
+    default: "index.docker.io/appsmith/appsmith-ce"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "appsmith"
+    is_required: true
+
+  host_port_http:
+    type: "integer"
+    description: "Host port for HTTP (port 80)"
+    default: 80
+    is_required: true
+
+  host_port_https:
+    type: "integer"
+    description: "Host port for HTTPS (port 443)"
+    default: 443
+    is_required: true
+
+  volume_path:
+    type: "string"
+    description: "Path on host for persistent data (stacks directory)"
+    default: "./stacks"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Appsmith image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Appsmith container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports:
+          - "{{ host_port_http }}:80"
+          - "{{ host_port_https }}:443"
+        volumes:
+          - "{{ volume_path }}:/appsmith-stacks"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from Appsmith"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port_http }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

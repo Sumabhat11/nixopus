@@ -1,0 +1,99 @@
+metadata:
+  id: "deploy-logseq"
+  name: "Logseq"
+  description: "Logseq is a free and open-source knowledge base that works on top of local plain-text Markdown and org-mode files."
+  author: "Nixopus Team"
+  icon: "🧠"
+  category: "Storage"
+  type: "install"
+  version: "1.0.0"
+  isVerified: true
+
+variables:
+  compose_file:
+    type: "string"
+    description: "Path to the Docker Compose file"
+    default: "./docker-compose.yml"
+    is_required: true
+  container_name:
+    type: "string"
+    description: "Name of the Logseq container"
+    default: "logseq"
+    is_required: true
+  host_port:
+    type: "integer"
+    description: "Host port to expose Logseq web interface"
+    default: 3000
+    is_required: true
+  container_port:
+    type: "integer"
+    description: "Container port Logseq listens on"
+    default: 80
+    is_required: true
+  data_volume:
+    type: "string"
+    description: "Host path to mount for persistent data"
+    default: "./logseq_data"
+    is_required: true
+  custom_user:
+    type: "string"
+    description: "Custom username for basic HTTP authentication"
+    default: "admin"
+    is_required: true
+  password:
+    type: "string"
+    description: "Password for basic HTTP authentication"
+    default: "password"
+    is_required: true
+  timezone:
+    type: "string"
+    description: "Timezone for the container"
+    default: "UTC"
+    is_required: true
+  uid:
+    type: "integer"
+    description: "User ID for the container"
+    default: 1000
+    is_required: true
+  gid:
+    type: "integer"
+    description: "Group ID for the container"
+    default: 1000
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Logseq image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "ghcr.io/logseq/logseq-webapp"
+        tag: "latest"
+      timeout: 300
+
+    - name: "Run Logseq container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "ghcr.io/logseq/logseq-webapp"
+        tag: "latest"
+        ports:
+          - "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ data_volume }}:/data"
+        environment:
+          - CUSTOM_USER={{ custom_user }}
+          - PASSWORD={{ password }}
+          - TZ={{ timezone }}
+          - PUID={{ uid }}
+          - PGID={{ gid }}
+        restart: "unless-stopped"
+      timeout: 180
+
+  # validate:
+  #   - name: "Check HTTP response from Logseq"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }}/ | grep -E '^(200|301|302)$'"
+  #     timeout: 60

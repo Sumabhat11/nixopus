@@ -1,0 +1,136 @@
+metadata:
+  id: "deploy-nextcloud"
+  name: "Nextcloud"
+  description: "Nextcloud is a self-hosted content collaboration platform (files, calendar, contacts, mail) allowing you full control over your data."
+  author: "Nixopus Team"
+  icon: "☁️"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Nextcloud"
+    default: "nextcloud"
+    is_required: true
+  tag:
+    type: "string"
+    description: "Docker image tag for Nextcloud"
+    default: "latest"
+    is_required: true
+  container_name:
+    type: "string"
+    description: "Name of the Nextcloud container"
+    default: "nextcloud"
+    is_required: true
+  host_port:
+    type: "integer"
+    description: "Host port to expose for Nextcloud HTTP (web interface)"
+    default: 8080
+    is_required: true
+  container_port:
+    type: "integer"
+    description: "Container port Nextcloud listens on (HTTP)"
+    default: 80
+    is_required: true
+  db_image:
+    type: "string"
+    description: "Docker image for the database (e.g., MariaDB) used by Nextcloud"
+    default: "mariadb:latest"
+    is_required: true
+  db_container_name:
+    type: "string"
+    description: "Name of the database container"
+    default: "nextcloud-db"
+    is_required: true
+  db_root_password:
+    type: "string"
+    description: "Root password for the database container"
+    default: "example_root_pwd"
+    is_required: true
+  db_database:
+    type: "string"
+    description: "Database name for Nextcloud"
+    default: "nextcloud"
+    is_required: true
+  db_user:
+    type: "string"
+    description: "Database user for Nextcloud"
+    default: "ncuser"
+    is_required: true
+  db_password:
+    type: "string"
+    description: "Password for the Nextcloud DB user"
+    default: "example_nc_pwd"
+    is_required: true
+  data_volume:
+    type: "string"
+    description: "Host path to mount for Nextcloud persistent data"
+    default: "./nextcloud_data"
+    is_required: true
+  config_volume:
+    type: "string"
+    description: "Host path to mount for Nextcloud config directory"
+    default: "./nextcloud_config"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Nextcloud image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Pull database image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ db_image }}"
+      timeout: 300
+
+    - name: "Run database container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ db_container_name }}"
+        image: "{{ db_image }}"
+        restart: "unless-stopped"
+        environment:
+          - "MYSQL_ROOT_PASSWORD={{ db_root_password }}"
+          - "MYSQL_DATABASE={{ db_database }}"
+          - "MYSQL_USER={{ db_user }}"
+          - "MYSQL_PASSWORD={{ db_password }}"
+        volumes:
+          - "{{ data_volume }}/db:/var/lib/mysql"
+      timeout: 180
+
+    - name: "Run Nextcloud container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        restart: "unless-stopped"
+        environment:
+          - "MYSQL_HOST={{ db_container_name }}"
+          - "MYSQL_DATABASE={{ db_database }}"
+          - "MYSQL_USER={{ db_user }}"
+          - "MYSQL_PASSWORD={{ db_password }}"
+        volumes:
+          - "{{ config_volume }}:/var/www/html/config"
+          - "{{ data_volume }}/ncdata:/var/www/html/data"
+      timeout: 300
+
+  # validate:
+  #   - name: "Check HTTP response from Nextcloud"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

@@ -1,0 +1,68 @@
+metadata:
+  id: "deploy-pocketbase"
+  name: "PocketBase"
+  description: "PocketBase is an open-source backend solution offering a real-time database, authentication, file storage, and an admin dashboard, all in a single file."
+  author: "Nixopus Team"
+  icon: "📦"
+  category: "Containers"
+  type: "install"
+  version: "0.31.0"
+  isVerified: false
+
+variables:
+  pb_version:
+    type: "string"
+    description: "PocketBase version to deploy"
+    default: "0.31.0"
+    is_required: true
+  container_name:
+    type: "string"
+    description: "Name of the PocketBase container"
+    default: "pocketbase"
+    is_required: true
+  host_port:
+    type: "integer"
+    description: "Host port to expose PocketBase web interface"
+    default: 8090
+    is_required: true
+  container_port:
+    type: "integer"
+    description: "Container port PocketBase listens on"
+    default: 8090
+    is_required: true
+  data_volume:
+    type: "string"
+    description: "Host path to mount for persistent data"
+    default: "./pb_data"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull PocketBase image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "ghcr.io/pocketbase/pocketbase"
+        tag: "{{ pb_version }}"
+      timeout: 300
+
+    - name: "Run PocketBase container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "ghcr.io/pocketbase/pocketbase"
+        tag: "{{ pb_version }}"
+        ports:
+          - "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ data_volume }}:/pb_data"
+        restart: "unless-stopped"
+      timeout: 180
+
+  # validate:
+  #   - name: "Check HTTP response from PocketBase"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }}/ | grep -E '^(200|301|302)$'"
+  #     timeout: 60

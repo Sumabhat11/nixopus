@@ -1,0 +1,143 @@
+metadata:
+  id: "deploy-reactive-resume"
+  name: "Reactive Resume"
+  description: "Reactive Resume is a free and open-source resume builder that simplifies the process of creating, updating, and sharing your resume. It offers real-time editing, multiple templates, and PDF export capabilities, all while ensuring user privacy."
+  author: "Nixopus Team"
+  icon: "📝"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  container_name_server:
+    type: "string"
+    description: "Name of the server container"
+    default: "reactive-resume-server"
+    is_required: true
+
+  container_name_client:
+    type: "string"
+    description: "Name of the client container"
+    default: "reactive-resume-client"
+    is_required: true
+
+  host_port_server:
+    type: "integer"
+    description: "Host port to expose for the server"
+    default: 3100
+    is_required: true
+
+  host_port_client:
+    type: "integer"
+    description: "Host port to expose for the client"
+    default: 3000
+    is_required: true
+
+  data_volume_path:
+    type: "string"
+    description: "Host path for persistent data directory"
+    default: "./data"
+    is_required: true
+
+  postgres_password:
+    type: "string"
+    description: "Password for the PostgreSQL database"
+    default: "postgres"
+    is_required: true
+
+  secret_key:
+    type: "string"
+    description: "Secret key for session encryption"
+    default: "change-me-to-something-secure"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull PostgreSQL image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "postgres:alpine"
+        tag: "latest"
+      timeout: 300
+
+    - name: "Run PostgreSQL container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "postgres"
+        image: "postgres:alpine"
+        tag: "latest"
+        ports:
+          - "5432:5432"
+        volumes:
+          - "{{ data_volume_path }}/postgres:/var/lib/postgresql/data"
+        environment:
+          - POSTGRES_DB=postgres
+          - POSTGRES_USER=postgres
+          - POSTGRES_PASSWORD={{ postgres_password }}
+        restart: "unless-stopped"
+      timeout: 120
+
+    - name: "Pull Reactive Resume server image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "amruthpillai/reactive-resume:server-latest"
+        tag: "latest"
+      timeout: 300
+
+    - name: "Run Reactive Resume server container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name_server }}"
+        image: "amruthpillai/reactive-resume:server-latest"
+        tag: "latest"
+        ports:
+          - "{{ host_port_server }}:3100"
+        environment:
+          - PUBLIC_URL=http://localhost:{{ host_port_client }}
+          - PUBLIC_SERVER_URL=http://localhost:{{ host_port_server }}
+          - POSTGRES_DB=postgres
+          - POSTGRES_USER=postgres
+          - POSTGRES_PASSWORD={{ postgres_password }}
+          - SECRET_KEY={{ secret_key }}
+          - POSTGRES_HOST=postgres
+        depends_on:
+          - postgres
+        restart: "unless-stopped"
+      timeout: 120
+
+    - name: "Pull Reactive Resume client image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "amruthpillai/reactive-resume:client-latest"
+        tag: "latest"
+      timeout: 300
+
+    - name: "Run Reactive Resume client container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name_client }}"
+        image: "amruthpillai/reactive-resume:client-latest"
+        tag: "latest"
+        ports:
+          - "{{ host_port_client }}:3000"
+        environment:
+          - PUBLIC_URL=http://localhost:{{ host_port_client }}
+          - PUBLIC_SERVER_URL=http://localhost:{{ host_port_server }}
+        depends_on:
+          - server
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from Reactive Resume client"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port_client }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

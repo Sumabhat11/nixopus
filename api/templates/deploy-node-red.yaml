@@ -1,0 +1,79 @@
+metadata:
+  id: "deploy-node-red"
+  name: "Node-RED"
+  description: "Node-RED is a flow-based, low-code programming tool for connecting hardware devices, APIs and online services in new and interesting ways."
+  author: "Nixopus Team"
+  icon: "🔁"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Node-RED"
+    default: "nodered/node-red"
+    is_required: true
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+  container_name:
+    type: "string"
+    description: "Name of the Node-RED container"
+    default: "node-red"
+    is_required: true
+  host_port:
+    type: "integer"
+    description: "Host port to expose for Node-RED"
+    default: 1880
+    is_required: true
+  container_port:
+    type: "integer"
+    description: "Container port Node-RED listens on"
+    default: 1880
+    is_required: true
+  data_volume:
+    type: "string"
+    description: "Host path or volume to persist Node-RED data (/data in container)"
+    default: "./node-red_data"
+    is_required: true
+  timezone:
+    type: "string"
+    description: "Time zone environment variable (TZ) for container"
+    default: "UTC"
+    is_required: false
+
+execution:
+  run:
+    - name: "Pull Node-RED image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Node-RED container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports: "{{ host_port }}:{{ container_port }}"
+        volumes:
+          - "{{ data_volume }}:/data"
+        environment:
+          - "TZ={{ timezone }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+  # validate:
+  #   - name: "Check HTTP response from Node-RED"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }}/ | grep -E '^(200|301|302)$'"
+  #     timeout: 60

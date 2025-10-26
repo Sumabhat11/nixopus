@@ -1,0 +1,93 @@
+metadata:
+  id: "deploy-nginx-proxy-manager"
+  name: "Nginx Proxy Manager"
+  description: "Nginx Proxy Manager is a web-based interface for managing reverse proxies, SSL certificates and hosts, self-hostable via Docker/Compose."
+  author: "Nixopus Team"
+  icon: "🌐"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Nginx Proxy Manager"
+    default: "jc21/nginx-proxy-manager"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "nginx-proxy-manager"
+    is_required: true
+
+  host_port_http:
+    type: "integer"
+    description: "Host port for HTTP traffic (port 80)"
+    default: 80
+    is_required: true
+
+  host_port_admin:
+    type: "integer"
+    description: "Host port for Admin UI (port 81)"
+    default: 81
+    is_required: true
+
+  host_port_https:
+    type: "integer"
+    description: "Host port for HTTPS traffic (port 443)"
+    default: 443
+    is_required: true
+
+  data_volume_path:
+    type: "string"
+    description: "Host path for persistent data directory"
+    default: "./data"
+    is_required: true
+
+  letsencrypt_volume_path:
+    type: "string"
+    description: "Host path for Let's Encrypt certificates directory"
+    default: "./letsencrypt"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Nginx Proxy Manager image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Nginx Proxy Manager container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports:
+          - "{{ host_port_http }}:80"
+          - "{{ host_port_admin }}:81"
+          - "{{ host_port_https }}:443"
+        volumes:
+          - "{{ data_volume_path }}:/data"
+          - "{{ letsencrypt_volume_path }}:/etc/letsencrypt"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from Nginx Proxy Manager admin UI"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port_admin }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

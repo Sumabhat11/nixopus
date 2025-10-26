@@ -1,0 +1,79 @@
+metadata:
+  id: "deploy-authelia"
+  name: "Authelia"
+  description: "Authelia is an open-source authentication and authorization server providing two-factor authentication (2FA), single sign-on (SSO) for web apps, self-hostable via Docker/Compose."
+  author: "Nixopus Team"
+  icon: "🔐"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Authelia"
+    default: "authelia/authelia"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "authelia"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose for Authelia UI/API (default 9091)"
+    default: 9091
+    is_required: true
+
+  config_path:
+    type: "string"
+    description: "Host path for Authelia configuration directory"
+    default: "./authelia/config"
+    is_required: true
+
+  secrets_path:
+    type: "string"
+    description: "Host path for Authelia secrets directory"
+    default: "./authelia/secrets"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Authelia image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+      timeout: 300
+
+    - name: "Run Authelia container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "{{ image }}"
+        tag: "{{ tag }}"
+        ports:
+          - "{{ host_port }}:9091"
+        volumes:
+          - "{{ config_path }}:/config"
+          - "{{ secrets_path }}:/secrets"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from Authelia UI"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

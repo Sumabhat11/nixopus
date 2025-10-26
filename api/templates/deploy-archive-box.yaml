@@ -1,0 +1,60 @@
+metadata:
+  id: "deploy-archivebox"
+  name: "ArchiveBox"
+  description: "ArchiveBox is an open-source self-hosted web archiving tool that saves HTML, JS, PDFs, media, and more from URLs, browser history, bookmarks, and services like Pocket and Pinboard."
+  author: "Nixopus Team"
+  icon: "📦"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  container_name:
+    type: "string"
+    description: "Name of the ArchiveBox container"
+    default: "archivebox"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose for the web UI"
+    default: 8000
+    is_required: true
+
+  data_volume_path:
+    type: "string"
+    description: "Host path for persistent data directory"
+    default: "./data"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull ArchiveBox image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "archivebox/archivebox"
+        tag: "latest"
+      timeout: 300
+
+    - name: "Run ArchiveBox container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name }}"
+        image: "archivebox/archivebox"
+        tag: "latest"
+        ports:
+          - "{{ host_port }}:8000"
+        volumes:
+          - "{{ data_volume_path }}:/data"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check HTTP response from ArchiveBox"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60

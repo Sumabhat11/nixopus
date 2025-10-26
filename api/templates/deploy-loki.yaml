@@ -1,0 +1,87 @@
+metadata:
+  id: "deploy-grafana-loki"
+  name: "Grafana Loki"
+  description: "Grafana Loki is an open-source log aggregation system designed to store and query logs from various sources, integrated seamlessly with Grafana for visualization."
+  author: "Nixopus Team"
+  icon: "📊"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  container_name_loki:
+    type: "string"
+    description: "Name of the Loki container"
+    default: "loki"
+    is_required: true
+
+  container_name_promtail:
+    type: "string"
+    description: "Name of the Promtail container"
+    default: "promtail"
+    is_required: true
+
+  host_port_loki:
+    type: "integer"
+    description: "Host port to expose for Loki"
+    default: 3100
+    is_required: true
+
+  data_volume_path:
+    type: "string"
+    description: "Host path for persistent data directory"
+    default: "./data"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull Loki image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "grafana/loki"
+        tag: "latest"
+      timeout: 300
+
+    - name: "Pull Promtail image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "grafana/promtail"
+        tag: "latest"
+      timeout: 300
+
+    - name: "Run Loki container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name_loki }}"
+        image: "grafana/loki"
+        tag: "latest"
+        ports:
+          - "{{ host_port_loki }}:3100"
+        volumes:
+          - "{{ data_volume_path }}:/data"
+        restart: "unless-stopped"
+      timeout: 120
+
+    - name: "Run Promtail container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name_promtail }}"
+        image: "grafana/promtail"
+        tag: "latest"
+        volumes:
+          - "/var/log:/var/log"
+          - "{{ data_volume_path }}:/etc/promtail"
+        restart: "unless-stopped"
+      timeout: 120
+
+  # validate:
+  #   - name: "Check Loki HTTP response"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port_loki }}/ready | grep -E '^(200|301|302)$'"
+  #     timeout: 60

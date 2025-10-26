@@ -1,0 +1,134 @@
+metadata:
+  id: "deploy-tooljet"
+  name: "ToolJet"
+  description: "ToolJet is an open-source low-code platform for building internal tools using a simple drag-and-drop interface."
+  author: "Nixopus Team"
+  icon: "🧰"
+  category: "Containers"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  container_name_tooljet:
+    type: "string"
+    description: "Name of the ToolJet container"
+    default: "tooljet"
+    is_required: true
+
+  container_name_db:
+    type: "string"
+    description: "Name of the PostgreSQL container"
+    default: "tooljet-db"
+    is_required: true
+
+  container_name_redis:
+    type: "string"
+    description: "Name of the Redis container"
+    default: "tooljet-redis"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose for ToolJet"
+    default: 80
+    is_required: true
+
+  postgres_password:
+    type: "string"
+    description: "Password for PostgreSQL database"
+    default: "tooljet"
+    is_required: true
+
+  secret_key:
+    type: "string"
+    description: "Secret key for ToolJet application"
+    default: "replace-with-secure-key"
+    is_required: true
+
+  data_volume_path:
+    type: "string"
+    description: "Host path for persistent data storage"
+    default: "./data"
+    is_required: true
+
+execution:
+  run:
+    - name: "Pull PostgreSQL image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "postgres"
+        tag: "14"
+      timeout: 300
+
+    - name: "Pull Redis image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "redis"
+        tag: "6-alpine"
+      timeout: 300
+
+    - name: "Pull ToolJet image"
+      type: "docker"
+      properties:
+        action: "pull"
+        image: "tooljet/tooljet-ce"
+        tag: "latest"
+      timeout: 300
+
+    - name: "Run PostgreSQL container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name_db }}"
+        image: "postgres"
+        tag: "14"
+        environment:
+          - POSTGRES_DB=tooljet
+          - POSTGRES_USER=tooljet
+          - POSTGRES_PASSWORD={{ postgres_password }}
+        volumes:
+          - "{{ data_volume_path }}/postgres:/var/lib/postgresql/data"
+        restart: "unless-stopped"
+      timeout: 120
+
+    - name: "Run Redis container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name_redis }}"
+        image: "redis"
+        tag: "6-alpine"
+        restart: "unless-stopped"
+      timeout: 120
+
+    - name: "Run ToolJet container"
+      type: "docker"
+      properties:
+        action: "run"
+        name: "{{ container_name_tooljet }}"
+        image: "tooljet/tooljet-ce"
+        tag: "latest"
+        ports:
+          - "{{ host_port }}:80"
+        environment:
+          - TOOLJET_DB_HOST={{ container_name_db }}
+          - TOOLJET_DB_USER=tooljet
+          - TOOLJET_DB_PASSWORD={{ postgres_password }}
+          - TOOLJET_DB_NAME=tooljet
+          - TOOLJET_REDIS_HOST={{ container_name_redis }}
+          - TOOLJET_SECRET_KEY={{ secret_key }}
+        depends_on:
+          - "{{ container_name_db }}"
+          - "{{ container_name_redis }}"
+        restart: "unless-stopped"
+      timeout: 180
+
+  # validate:
+  #   - name: "Check ToolJet HTTP response"
+  #     type: "command"
+  #     properties:
+  #       cmd: "curl -fsS -o /dev/null -w '%{http_code}\\n' http://localhost:{{ host_port }} | grep -E '^(200|301|302)$'"
+  #     timeout: 60
