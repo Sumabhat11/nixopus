@@ -95,6 +95,30 @@ The terminal inherits your application's theme and font settings. Customize them
 
 When the terminal is focused, application shortcuts are disabled to prevent conflicts with terminal commands. For example, `CTRL + C` sends SIGINT instead of copying.
 
+### Sessions
+
+Keep long-running shells alive and switch between them as needed.
+
+What sessions enable:
+
+* Multiple concurrent terminals: Create, name, and jump between sessions without losing shell state.
+* Auto-reconnect: The UI re-attaches to the last active session after page reloads or short disconnects.
+* Background execution: Commands keep running even if you close the tab or move to a different view.
+* Crash-safe: If the frontend exits unexpectedly, you can reattach later and keep working.
+
+Getting started:
+
+1. Create a session: Opening the terminal automatically starts a session; use the session menu to spin up more.
+2. Rename a session: Give each session a descriptive name (for example `deploy` or `logs`) from the session menu.
+3. Switch sessions: Select any existing session to attach instantly—scrollback and history stay intact per session.
+4. Close a session: Exit the shell or use the session menu to terminate it when you're done.
+
+Notes:
+
+* Session history is preserved while the session remains active.
+* Sessions stick to the current environment or VPS target.
+* Idle sessions may be reclaimed automatically based on server policy.
+
 ## What's Coming Next
 
 * Command sanitization and System protection against harmful commands
