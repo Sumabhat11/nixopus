@@ -80,7 +80,7 @@ export default function ContainersPage() {
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <span>
             <TypographyH1>{t('containers.title')}</TypographyH1>
-            <TypographyMuted>Manage and monitor your containers</TypographyMuted>
+            <TypographyMuted>{t('containers.description')}</TypographyMuted>
           </span>
           <div className="flex items-center gap-2 flex-wrap">
             <Button

@@ -83,7 +83,7 @@ function page() {
       <PageLayout maxWidth="6xl" padding="md" spacing="lg">
         <DashboardPageHeader
           label={t('selfHost.page.title')}
-          description="Deploy and manage your self-hosted applications"
+          description={t('selfHost.page.description')}
         />
         {renderContent()}
 
