@@ -101,29 +101,31 @@ Keep long-running shells alive and switch between them as needed.
 
 What sessions enable:
 
-* Multiple concurrent terminals: Create, name, and jump between sessions without losing shell state.
-* Auto-reconnect: The UI re-attaches to the last active session after page reloads or short disconnects.
+* Up to three concurrent terminals: Create and jump between sessions without losing shell state (maximum of three active sessions at a time).
 * Background execution: Commands keep running even if you close the tab or move to a different view.
 * Crash-safe: If the frontend exits unexpectedly, you can reattach later and keep working.
 
 Getting started:
 
 1. Create a session: Opening the terminal automatically starts a session; use the session menu to spin up more.
-2. Rename a session: Give each session a descriptive name (for example `deploy` or `logs`) from the session menu.
-3. Switch sessions: Select any existing session to attach instantly—scrollback and history stay intact per session.
-4. Close a session: Exit the shell or use the session menu to terminate it when you're done.
+2. Switch sessions: Select any existing session to attach instantly—scrollback and history stay intact per session.
+3. Close a session: Exit the shell or use the session menu to terminate it when you're done.
 
-Notes:
+Session behavior and limits:
 
-* Session history is preserved while the session remains active.
-* Sessions stick to the current environment or VPS target.
-* Idle sessions may be reclaimed automatically based on server policy.
+* Up to three sessions can run at the same time; close an existing session to start a new one if you hit the limit.
+* Sessions do not auto-reconnect after a page reload—you'll need to open the terminal again to start a new session.
+* Session history is preserved only while the session remains active.
+* Each session is tied to its current environment or VPS target.
+* Idle sessions may be reclaimed automatically, depending on server policy.
 
 ## What's Coming Next
 
 * Command sanitization and System protection against harmful commands
 * Privacy safeguards and following best practices
 * Prompt customization
+* Auto-reconnect to the last active session after page reloads or short disconnects
+* Session renaming and enhanced session management controls
 * Multi-editor support
 * Command auto-completion
 * AI-powered command suggestions
