@@ -25,7 +25,7 @@
   },
   "containers": {
     "title": "Containers",
-    "description": "Preview all the containers",
+    "description": "Manage and monitor your containers",
     "list": "Container List",
     "name": "Name",
     "image": "Image",
@@ -139,6 +139,27 @@
       "privacyPolicy": "Privacy Policy",
       "alreadyHaveAccount": "Already have an account?",
       "success": "Registration successful! Please check your email to verify your account.",
+      "loadingStatus": "Checking registration status...",
+      "adminInfoBanner": "You are registering as the admin user. Only one admin can be registered per Nixopus instance.",
+      "adminAlreadyRegistered": {
+        "title": "Admin Registration Already Exists",
+        "description": "Instance has an admin user registered.",
+        "policyTitle": "Single Admin Policy",
+        "policy": "Only 1 admin registration is allowed per instance",
+        "nextSteps": "If you need access, please contact the existing admin.",
+        "goToLogin": "Go to Login",
+        "contactSupport": "Contact Support"
+      },
+      "successAdmin": {
+        "title": "Admin Registration Successful",
+        "message": "You are now the admin of this Nixopus instance. You have been automatically logged in.",
+        "whatsNext": "What's Next?",
+        "nextStep1": "You are now the administrator of this instance",
+        "nextStep2": "You can manage users, settings, and all features",
+        "nextStep3": "Access your admin dashboard to get started",
+        "goToDashboard": "Go to Dashboard",
+        "redirecting": "Redirecting to dashboard in {count} seconds..."
+      },
       "errors": {
         "invalidEmail": "Invalid email",
         "passwordMismatch": "Passwords don't match",
@@ -153,9 +174,25 @@
         "adminAlreadyRegisteredDescription": "Please contact the administrator to get access.",
         "loginButton": "Login",
         "somethingWentWrong": "Something went wrong",
-        "loadingAdminRegistration": "Checking if admin is registered...",
+        "loadingAdminRegistration": "Unable to check registration status. Please try again.",
         "tryAgain": "Try again",
-        "registerFailed": "Failed to register"
+        "registerFailed": "Failed to register",
+        "unknownError": "An unexpected error occurred. Please try again.",
+        "contactSupport": "Contact Support",
+        "showDetails": "Show Details",
+        "hideDetails": "Hide Details",
+        "networkError": {
+          "title": "Connection Failed",
+          "description": "Unable to connect to the server. Please check your internet connection and try again."
+        },
+        "serverError": {
+          "title": "Server Unavailable",
+          "description": "The server is currently unavailable. Please try again later."
+        },
+        "signUpNotAllowed": {
+          "message": "Registration Not Available",
+          "description": "Admin registration is not available. This instance already has an admin user registered."
+        }
       }
     },
     "email": "Email",
@@ -1296,6 +1333,44 @@
         "success": "GitHub App created successfully!"
       }
     },
+    "githubSetup": {
+      "steps": {
+        "welcome": {
+          "title": "Get Started",
+          "description": "Connect your GitHub account"
+        },
+        "createApp": {
+          "title": "Create App",
+          "description": "Set up GitHub App"
+        },
+        "installApp": {
+          "title": "Install",
+          "description": "Connect repositories"
+        }
+      },
+      "welcome": {
+        "title": "Connect Your GitHub Account",
+        "description": "Create a GitHub App to deploy applications directly from your repositories. This setup takes just a few minutes.",
+        "benefits": {
+          "secure": {
+            "title": "GitHub App Manifest",
+            "description": "We'll create a GitHub App using the manifest flow. Your credentials are securely managed through GitHub's app system."
+          },
+          "automated": {
+            "title": "Automated Deployments",
+            "description": "Automatically deploy your applications when you push code to your repositories."
+          },
+          "repositories": {
+            "title": "Access Your Repositories",
+            "description": "Select and deploy from any of your GitHub repositories with just a few clicks."
+          }
+        }
+      },
+      "buttons": {
+        "next": "Continue",
+        "back": "Back"
+      }
+    },
     "repositories": {
       "title": "Repositories",
       "noRepositories": "No repositories found",
@@ -1307,6 +1382,53 @@
         "created": "Created",
         "updated": "Updated",
         "stars": "Stars"
+      },
+      "settings": "Settings"
+    },
+    "connectorSettings": {
+      "title": "GitHub Connector Settings",
+      "description": "Manage your GitHub connectors, switch between them, or add new ones",
+      "active": "Active",
+      "noConnectors": "No GitHub connectors found. Please create one to get started.",
+      "connector": {
+        "slug": "Slug",
+        "installationId": "Installation ID"
+      },
+      "currentConnector": {
+        "title": "Current Connector",
+        "description": "If any repository is missing or you want to add more repositories, click the link below to manage your GitHub installation settings.",
+        "viewOnGithub": "Manage GitHub Installation"
+      },
+      "actions": {
+        "addNew": "Add New Connector",
+        "switch": {
+          "label": "Switch",
+          "success": "Connector switched successfully"
+        },
+        "delete": {
+          "label": "Delete",
+          "success": "Connector deleted successfully",
+          "error": {
+            "generic": "Failed to delete connector",
+            "lastConnector": "Cannot delete the last connector. Please add another connector first."
+          },
+          "dialog": {
+            "title": "Delete Connector",
+            "description": "Are you sure you want to delete {name}? This action cannot be undone.",
+            "confirm": "Delete",
+            "cancel": "Cancel",
+            "deleting": "Deleting..."
+          }
+        },
+        "update": {
+          "success": "Connector updated successfully",
+          "error": "Failed to update connector"
+        },
+        "reset": {
+          "label": "Reset",
+          "info": "Opening GitHub installation settings. Please reconfigure the installation there.",
+          "error": "Unable to open GitHub settings. Installation ID not found."
+        }
       }
     },
     "repositoryCard": {
