@@ -6,11 +6,11 @@
   "private": false,
   "cli-version": "0.1.45",
   "cli-packages": [
-    "nixopus-0.1.45-darwin-arm64.pkg",
-    "nixopus_0.1.45_amd64.deb",
     "nixopus.tar",
+    "nixopus-0.1.45-1.x86_64.rpm",
+    "nixopus_0.1.45_amd64.deb",
     "nixopus_0.1.45_amd64.apk",
-    "nixopus-0.1.45-1.x86_64.rpm"
+    "nixopus-0.1.45-darwin-arm64.pkg"
   ],
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
